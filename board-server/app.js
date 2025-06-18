@@ -1,6 +1,10 @@
 const express = require('express');
+const cors = require('cors');
 const app = express();
 const db = require('./models');
+
+// CORS 설정
+app.use(cors());
 
 //json 파싱
 app.use(express.json());

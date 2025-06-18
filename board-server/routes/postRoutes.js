@@ -4,6 +4,7 @@ const postController = require('../controllers/postController');
 const verifyToken = require('../middleware/authMiddleware');
 
 router.get('/', postController.getPosts);
+router.get('/:id', postController.getPostById);
 /*인증된 사용자만*/
 //게시글 작성
 router.post('/', verifyToken, postController.createPost);

@@ -1,4 +1,4 @@
-const { Post, User } = require('../models');
+const { Post, User, PostLike, Comment, CommentLike } = require('../models');
 
 // 게시글 목록 조회
 exports.getPosts = async (req, res) => {
@@ -10,6 +10,31 @@ exports.getPosts = async (req, res) => {
     res.json(posts);
   } catch (err) {
     res.status(500).json({ error: '게시글 조회 실패' });
+  }
+};
+
+// 단일 게시글 조회
+exports.getPostById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const post = await Post.findByPk(id, {
+      include: [
+        { model: User, attributes: ['id', 'username'] },
+        { model: PostLike, include: [{ model: User, attributes: ['id', 'username'] }] },
+      ]
+    });
+    
+    if (!post) {
+      return res.status(404).json({ error: '게시글을 찾을 수 없습니다.' });
+    }
+    
+    // 좋아요 수 확인을 위한 로그
+    console.log('게시글 좋아요 수:', post.PostLikes ? post.PostLikes.length : 0);
+    
+    res.json(post);
+  } catch (err) {
+    console.error('게시글 조회 오류:', err);
+    res.status(500).json({ error: '게시글 조회 실패', detail: err.message });
   }
 };
 
@@ -67,8 +92,6 @@ exports.deletePost = async (req, res) => {
 };
 
 //게시글 좋아요 기능
-const { PostLike } = require('../models');
-
 exports.toggleLike = async (req, res) => {
   try {
     const postId = req.params.id;

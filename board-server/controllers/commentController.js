@@ -1,4 +1,4 @@
-const { Comment, User } = require('../models');
+const { Comment, User, CommentLike } = require('../models');
 
 // 댓글 작성
 exports.createComment = async (req, res) => {
@@ -20,11 +20,15 @@ exports.getCommentsByPost = async (req, res) => {
     const { postId } = req.params;
     const comments = await Comment.findAll({
       where: { postId },
-      include: { model: User, attributes: ['username'] },
+      include: [
+        { model: User, attributes: ['id', 'username'] },
+        { model: CommentLike, include: [{ model: User, attributes: ['id', 'username'] }] }
+      ],
       order: [['createdAt', 'ASC']]
     });
     res.json(comments);
   } catch (err) {
+    console.error('댓글 조회 오류:', err);
     res.status(500).json({ error: '댓글 조회 실패', detail: err.message });
   }
 };
@@ -69,23 +73,26 @@ exports.deleteComment = async (req, res) => {
 };
 
 //댓글 좋아요 기능
-const { CommentLike } = require('../models');
-
 exports.toggleCommentLike = async (req, res) => {
   try {
     const commentId = req.params.id;
     const userId = req.user.id;
 
+    console.log('댓글 좋아요 요청:', { commentId, userId });
+
     const existing = await CommentLike.findOne({ where: { commentId, userId } });
 
     if (existing) {
       await existing.destroy();
+      console.log('댓글 좋아요 취소 완료');
       return res.json({ message: '댓글 좋아요 취소' });
     } else {
       await CommentLike.create({ commentId, userId });
+      console.log('댓글 좋아요 추가 완료');
       return res.json({ message: '댓글 좋아요 추가' });
     }
   } catch (err) {
+    console.error('댓글 좋아요 처리 오류:', err);
     res.status(500).json({ error: '댓글 좋아요 처리 실패', detail: err.message });
   }
 };
